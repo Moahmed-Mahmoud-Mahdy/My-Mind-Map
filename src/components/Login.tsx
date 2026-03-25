@@ -6,11 +6,12 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { BrainCircuit, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../firebase';
 
 export default function Login() {
   const { signInWithGoogle } = useAuth();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,11 +23,17 @@ export default function Login() {
       toast.error('Please enter email and password');
       return;
     }
+    
+    if (isSignUp && !name) {
+      toast.error('Please enter your name');
+      return;
+    }
 
     setLoading(true);
     try {
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: name });
         toast.success('Account created successfully!');
       } else {
         await signInWithEmailAndPassword(auth, email, password);
@@ -66,6 +73,19 @@ export default function Login() {
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleEmailAuth} className="space-y-4">
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input 
+                  id="name" 
+                  type="text" 
+                  placeholder="John Doe" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required={isSignUp}
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input 
